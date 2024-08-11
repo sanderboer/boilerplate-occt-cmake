@@ -27,9 +27,9 @@ ExternalProject_Add(
     GIT_TAG V7_8_1
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/occt-install
-        -DBUILD_LIBRARY_TYPE=Shared
+        -DBUILD_LIBRARY_TYPE=Static
         -DBUILD_MODULE_ApplicationFramework=ON
-        -DBUILD_MODULE_DETools=ON
+        -DBUILD_MODULE_DETools=OFF #static build fails on ExpToCasExe
         -DBUILD_MODULE_DataExchange=ON
         -DBUILD_MODULE_Draw=OFF
         -DBUILD_MODULE_FoundationClasses=ON
@@ -53,7 +53,7 @@ ExternalProject_Add(
     GIT_TAG 5.0
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/raylib-install
-        -DBUILD_SHARED_LIBS=ON
+        -DBUILD_SHARED_LIBS=OFF
         -DBUILD_EXAMPLES=OFF
         -DENABLE_ASAN=OFF
         -DENABLE_UBSAN=OFF
@@ -107,39 +107,90 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 # Link against OpenCascade libraries after they've been built
 add_dependencies(${PROJECT_NAME} OCCT raylib raygui)
 
-target_link_libraries(${PROJECT_NAME} 
-    TKernel
-    TKMath
-    TKG2d
-    TKG3d
-    TKBRep
-    TKGeomBase
-    TKGeomAlgo
-    TKTopAlgo
-    TKPrim
-    TKBO
-    TKShHealing
-    TKXMesh
-    raylib.a
-    m
-)
+# # Link against OpenCascade and raylib static libraries
+# target_link_libraries(${PROJECT_NAME} 
+#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKBO.a
+#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKernel.a
+#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKMath.a
+#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKG2d.a
+#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKG3d.a
+#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKBRep.a
+#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKGeomBase.a
+#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKGeomAlgo.a
+#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKTopAlgo.a
+#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKPrim.a
+#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKBO.a
+#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKShHealing.a
+#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKXMesh.a
+#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKXSBase.a
+#     # ${CMAKE_BINARY_DIR}/raylib-install/lib64/libraylib.a
+#     TKPrim.a
+#     raylib.a
+#     m
+#     pthread
+# )
 
+target_link_libraries(${PROJECT_NAME} 
+   raylib.a
+    m
+    pthread
+
+  -Wl,--whole-archive   
+      TKernel.a 
+      TKBO.a
+      TKBRep.a
+      TKBin.a
+      TKBinL.a
+      TKBinTObj.a
+      TKBinXCAF.a
+      TKBool.a
+     # TKCAF.a
+     # TKCDF.a
+      TKDE.a
+      TKDECascade.a
+     # TKDEGLTF.a
+     # TKDEIGES.a
+     # TKDEOBJ.a
+     # TKDEPLY.a
+     # TKDESTEP.a
+     # TKDESTL.a
+     # TKDEVRML.a
+      TKFeat.a
+      TKFillet.a
+      TKG2d.a
+      TKG3d.a
+      TKGeomAlgo.a
+      TKGeomBase.a
+     # TKHLR.a
+     # TKLCAF.a
+      TKMath.a
+      TKMesh.a
+      TKMeshVS.a
+      TKOffset.a
+      TKOpenGl.a
+      TKPrim.a
+      TKRWMesh.a
+      TKService.a
+      TKShHealing.a
+      TKStd.a
+      TKStdL.a
+     # TKTObj.a
+      TKTopAlgo.a
+     # TKV3d.a
+     # TKVCAF.a
+     # TKXCAF.a
+     # TKXMesh.a
+     # TKXSBase.a
+     # TKXml.a
+     # TKXmlL.a
+     # TKXmlTObj.a
+     # TKXmlXCAF.a
+)
+#
 # Post-build step to copy necessary libraries to the bin directory based on build type
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_BINARY_DIR}/occt-install/lib/libTKernel.so*
-        ${CMAKE_BINARY_DIR}/occt-install/lib/libTKMath.so*
-        ${CMAKE_BINARY_DIR}/occt-install/lib/libTKG2d.so*
-        ${CMAKE_BINARY_DIR}/occt-install/lib/libTKG3d.so*
-        ${CMAKE_BINARY_DIR}/occt-install/lib/libTKBRep.so*
-        ${CMAKE_BINARY_DIR}/occt-install/lib/libTKGeomBase.so*
-        ${CMAKE_BINARY_DIR}/occt-install/lib/libTKGeomAlgo.so*
-        ${CMAKE_BINARY_DIR}/occt-install/lib/libTKTopAlgo.so*
-        ${CMAKE_BINARY_DIR}/occt-install/lib/libTKPrim.so*
-        ${CMAKE_BINARY_DIR}/occt-install/lib/libTKBO.so*
-        ${CMAKE_BINARY_DIR}/occt-install/lib/libTKShHealing.so*
-        ${CMAKE_BINARY_DIR}/occt-install/lib/libTKXMesh.so*
-        ${CMAKE_BINARY_DIR}/raylib-install/lib64/libraylib.so*
-        $<TARGET_FILE_DIR:${PROJECT_NAME}>
+       $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
+
 
