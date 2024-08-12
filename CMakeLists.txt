@@ -1,196 +1,97 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.2)
 
-# Project name
-project(OpenCascadeProject)
+project(occt-webgl-sample)
 
-# Set the C++ standard
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(APP_VERSION_MAJOR 1)
+set(APP_VERSION_MINOR 0)
+set(APP_TARGET occt-webgl-sample)
 
-# Define the number of threads (default to the number of available processors)
-if(NOT DEFINED NUM_BUILD_THREADS)
-  set(NUM_BUILD_THREADS 4)
-endif()
-
-# Set default build type to Debug if not specified
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
-endif()
-
-# Include ExternalProject module
-include(ExternalProject)
-
-# Add an external project for OpenCascade
-ExternalProject_Add(
-    OCCT
-    GIT_REPOSITORY https://github.com/Open-Cascade-SAS/OCCT.git
-    GIT_TAG V7_8_1
-    CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/occt-install
-        -DBUILD_LIBRARY_TYPE=Static
-        -DBUILD_MODULE_ApplicationFramework=ON
-        -DBUILD_MODULE_DETools=OFF #static build fails on ExpToCasExe
-        -DBUILD_MODULE_DataExchange=ON
-        -DBUILD_MODULE_Draw=OFF
-        -DBUILD_MODULE_FoundationClasses=ON
-        -DBUILD_MODULE_ModelingAlgorithms=ON
-        -DBUILD_MODULE_ModelingData=ON
-        -DBUILD_MODULE_Visualization=ON
-        -DBUILD_DOC_Overview=OFF
-        -DBUILD_SAMPLES_QT=OFF
-
-    BUILD_IN_SOURCE 1
-    UPDATE_DISCONNECTED 1
-    BUILD_COMMAND ${CMAKE_COMMAND} --build . -- -j${NUM_BUILD_THREADS}
-)
-include_directories(${CMAKE_BINARY_DIR}/occt-install/include/opencascade)
-link_directories(${CMAKE_BINARY_DIR}/occt-install/lib)
-
-# Add an external project for raylib
-ExternalProject_Add(
-    raylib
-    GIT_REPOSITORY https://github.com/raysan5/raylib.git
-    GIT_TAG 5.0
-    CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/raylib-install
-        -DBUILD_SHARED_LIBS=OFF
-        -DBUILD_EXAMPLES=OFF
-        -DENABLE_ASAN=OFF
-        -DENABLE_UBSAN=OFF
-        -DMACOS_FATLIB=OFF
-        -DUSE_AUDIO=OFF
-
-    BUILD_IN_SOURCE 1
-    UPDATE_DISCONNECTED 1
-    BUILD_COMMAND ${CMAKE_COMMAND} --build . -- -j${NUM_BUILD_THREADS}
-    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
-)
-include_directories(${CMAKE_BINARY_DIR}/raylib-install/include)
-link_directories(${CMAKE_BINARY_DIR}/raylib-install/lib64)
-
-# Fetch raygui (header-only library, no build required)
-ExternalProject_Add(
-    raygui
-    GIT_REPOSITORY https://github.com/raysan5/raygui.git
-    GIT_TAG 4.0
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-    SOURCE_SUBDIR src
-)
-# Include raygui header directory
-ExternalProject_Get_Property(raygui source_dir)
-include_directories(${source_dir}/src)
-
-# Set the output directory for the executable based on build type
-set(CUSTOM_BIN_DIR ${CMAKE_BINARY_DIR}/bin/$<CONFIG>)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CUSTOM_BIN_DIR})
-
-
-# Set the output directories for the executable based on build type
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin/Debug)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin/Release)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_BINARY_DIR}/bin/RelWithDebInfo)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${CMAKE_BINARY_DIR}/bin/MinSizeRel)
-
-# Set RPATH to ensure the executable finds the libraries
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-set(CMAKE_INSTALL_RPATH "$ORIGIN")
-
-# Add source files
-file(GLOB_RECURSE SOURCES src/*.cpp)
-
-# Add the executable
-add_executable(${PROJECT_NAME} ${SOURCES})
-
-# Link against OpenCascade libraries after they've been built
-add_dependencies(${PROJECT_NAME} OCCT raylib raygui)
-
-# # Link against OpenCascade and raylib static libraries
-# target_link_libraries(${PROJECT_NAME} 
-#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKBO.a
-#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKernel.a
-#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKMath.a
-#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKG2d.a
-#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKG3d.a
-#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKBRep.a
-#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKGeomBase.a
-#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKGeomAlgo.a
-#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKTopAlgo.a
-#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKPrim.a
-#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKBO.a
-#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKShHealing.a
-#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKXMesh.a
-#     # ${CMAKE_BINARY_DIR}/occt-install/lib/libTKXSBase.a
-#     # ${CMAKE_BINARY_DIR}/raylib-install/lib64/libraylib.a
-#     TKPrim.a
-#     raylib.a
-#     m
-#     pthread
-# )
-
-target_link_libraries(${PROJECT_NAME} 
-   raylib.a
-    m
-    pthread
-
-  -Wl,--whole-archive   
-      TKernel.a 
-      TKBO.a
-      TKBRep.a
-      TKBin.a
-      TKBinL.a
-      TKBinTObj.a
-      TKBinXCAF.a
-      TKBool.a
-     # TKCAF.a
-     # TKCDF.a
-      TKDE.a
-      TKDECascade.a
-     # TKDEGLTF.a
-     # TKDEIGES.a
-     # TKDEOBJ.a
-     # TKDEPLY.a
-     # TKDESTEP.a
-     # TKDESTL.a
-     # TKDEVRML.a
-      TKFeat.a
-      TKFillet.a
-      TKG2d.a
-      TKG3d.a
-      TKGeomAlgo.a
-      TKGeomBase.a
-     # TKHLR.a
-     # TKLCAF.a
-      TKMath.a
-      TKMesh.a
-      TKMeshVS.a
-      TKOffset.a
-      TKOpenGl.a
-      TKPrim.a
-      TKRWMesh.a
-      TKService.a
-      TKShHealing.a
-      TKStd.a
-      TKStdL.a
-     # TKTObj.a
-      TKTopAlgo.a
-     # TKV3d.a
-     # TKVCAF.a
-     # TKXCAF.a
-     # TKXMesh.a
-     # TKXSBase.a
-     # TKXml.a
-     # TKXmlL.a
-     # TKXmlTObj.a
-     # TKXmlXCAF.a
-)
+# set(CMAKE_C_COMPILER   "/Projects/Github/emsdk/upstream/emscripten/emcc")
+# set(CMAKE_CXX_COMPILER "/Projects/Github/emsdk/upstream/emscripten/em++")
+# set(CMAKE_CXX_LINK_EXECUTABLE "/Projects/Github/emsdk/upstream/bin/wasm-ld")
 #
-# Post-build step to copy necessary libraries to the bin directory based on build type
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-       $<TARGET_FILE_DIR:${PROJECT_NAME}>
+set(CMAKE_TOOLCHAIN_FILE "/Projects/Github/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake")
+
+set(CMAKE_INSTALL_PREFIX "/opt/occt-webgl")
+set(OpenCASCADE_DIR "/opt/emsdk-occt/lib/cmake/opencascade")
+set(freetype_DIR "/opt/emsdk-freetype/lib/cmake/freetype")
+  
+
+# option to enable or disable use of precompiled headers
+if (NOT DEFINED SOURCE_MAP_BASE)
+  set (SOURCE_MAP_BASE "" CACHE STRING "Path to source map server for debugging C++ code; e.g. http://localhost:9090/")
+endif()
+
+# customize build
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --bind")
+if (NOT "${SOURCE_MAP_BASE}" STREQUAL "")
+  set(CMAKE_CXX_FLAGS_DEBUG "-g4 --source-map-base ${SOURCE_MAP_BASE}")
+endif()
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s WASM=1")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s MAX_WEBGL_VERSION=2")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s MODULARIZE=1")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s EXPORT_NAME='createOccViewerModule'")
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sERROR_ON_UNDEFINED_SYMBOLS=0 ")
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1")
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --initial_memory=16MB")
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s TABLE_BASE=1")
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s TOTAL_MEMORY=16MB")
+#
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --preload-file myFile")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --extern-post-js ${CMAKE_CURRENT_SOURCE_DIR}/occt-webgl-viewer.js")
+
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
+file(GLOB SOURCES
+  *.h
+  *.cpp
+)
+source_group ("Headers" FILES
+  WasmOcctView.h)
+source_group ("Sources" FILES
+  WasmOcctView.cpp
+  main.cpp)
+
+# FreeType
+find_package(freetype REQUIRED NO_DEFAULT_PATH)
+if(freetype_FOUND)
+  message (STATUS "Using FreeType from \"${freetype_DIR}\"" )
+else()
+  message(WARNING "Could not find FreeType, please set freetype_DIR variable." )
+endif()
+
+# Open CASCADE Technology
+find_package(OpenCASCADE REQUIRED NO_DEFAULT_PATH)
+if(OpenCASCADE_FOUND)
+  message (STATUS "Using OpenCASCADE from \"${OpenCASCADE_DIR}\"" )
+  INCLUDE_DIRECTORIES(${OpenCASCADE_INCLUDE_DIR})
+  LINK_DIRECTORIES(${OpenCASCADE_LIBRARY_DIR})
+else()
+  message(WARNING "Could not find OpenCASCADE, please set OpenCASCADE_DIR variable." )
+  set(OCCT_LIBRARY_DIR)
+  set(OCCT_BIN_DIR)
+endif()
+
+set(OpenCASCADE_LIBS TKRWMesh TKDEGLTF TKDEOBJ TKDEPLY TKBinXCAF TKBin TKBinL TKOpenGles TKXCAF TKVCAF TKCAF TKV3d TKHLR TKMesh TKService TKShHealing TKPrim TKTopAlgo TKGeomAlgo TKBRep TKGeomBase TKG3d TKG2d TKMath TKLCAF TKCDF TKernel)
+
+add_executable(${APP_TARGET} ${SOURCES})
+target_link_libraries(
+  ${APP_TARGET}
+  ${OpenCASCADE_LIBS}
+  freetype
 )
 
-
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}" LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.wasm DESTINATION ${CMAKE_INSTALL_PREFIX})
+if (NOT "${SOURCE_MAP_BASE}" STREQUAL "")
+  if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.wasm.map DESTINATION ${CMAKE_INSTALL_PREFIX})
+  endif()
+endif()
+install(FILES occt-webgl-sample.html DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES ${OpenCASCADE_RESOURCE_DIR}/DrawResources/OCC_logo.png  DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES ${OpenCASCADE_RESOURCE_DIR}/DrawResources/lamp.ico      DESTINATION ${CMAKE_INSTALL_PREFIX})
+if (CMAKE_CXX_FLAGS MATCHES "-pthread")
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.worker.js DESTINATION ${CMAKE_INSTALL_PREFIX})
+endif()
