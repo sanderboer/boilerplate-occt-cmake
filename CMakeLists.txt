@@ -83,6 +83,7 @@ ExternalProject_Add(
     GIT_TAG V7_8_1
     CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -Dfreetype_DIR=${CMAKE_BINARY_DIR}/freetype-install
         -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/occt-install
         -DBUILD_LIBRARY_TYPE=Static
         -DBUILD_MODULE_ApplicationFramework=ON
