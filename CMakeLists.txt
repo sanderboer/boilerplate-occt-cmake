@@ -10,7 +10,107 @@ set(APP_TARGET occt-webgl-sample)
 # set(CMAKE_CXX_COMPILER "/Projects/Github/emsdk/upstream/emscripten/em++")
 # set(CMAKE_CXX_LINK_EXECUTABLE "/Projects/Github/emsdk/upstream/bin/wasm-ld")
 #
-set(CMAKE_TOOLCHAIN_FILE "/Projects/Github/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake")
+
+# Include ExternalProject module
+include(ExternalProject)
+
+# Step 1: Download and install emsdk
+ExternalProject_Add(emsdk
+    GIT_REPOSITORY    https://github.com/emscripten-core/emsdk.git
+    GIT_TAG           main
+    UPDATE_COMMAND    ""
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND     ./emsdk install latest && ./emsdk activate latest
+    INSTALL_COMMAND   ""
+    LOG_DOWNLOAD      ON
+    LOG_UPDATE        ON
+    LOG_CONFIGURE     ON
+    LOG_BUILD         ON
+    LOG_INSTALL       ON
+)
+
+# Step 2: Set up the Emscripten toolchain after emsdk is installed
+ExternalProject_Get_Property(emsdk SOURCE_DIR)
+ExternalProject_Get_Property(emsdk BINARY_DIR)
+
+# The path to the emsdk environment script
+set(EMSDK_ENV_SCRIPT "${BINARY_DIR}/emsdk_env.sh")
+
+# Load the emsdk environment (for Unix-like systems)
+add_custom_target(activate_emsdk
+    COMMAND source ${EMSDK_ENV_SCRIPT} && ${CMAKE_COMMAND} -E env
+    COMMENT "Activating emsdk"
+)
+
+# Step 3: Set the Emscripten toolchain for the project
+set(CMAKE_TOOLCHAIN_FILE "${BINARY_DIR}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake")
+
+# Ensure that the emsdk is installed before any targets are built
+add_dependencies(activate_emsdk emsdk)
+
+# Add an external project for OpenCascade
+ExternalProject_Add(
+  FREETYPE
+    GIT_REPOSITORY https://gitlab.freedesktop.org/freetype/freetype.git 
+    CMAKE_ARGS
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/freetype-install
+        -DBUILD_LIBRARY_TYPE=Static
+    BUILD_IN_SOURCE 1
+    UPDATE_DISCONNECTED 1
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . -- -j${NUM_BUILD_THREADS}
+)
+add_dependencies(FREETYPE activate_emsdk)
+
+include_directories(${CMAKE_BINARY_DIR}/freetype-install/include/)
+link_directories(${CMAKE_BINARY_DIR}/freetype-install/lib)
+
+# Add OpenCascade libraries
+ExternalProject_Get_Property(FREETYPE binary_dir)
+link_directories(${binary_dir}/lib)
+
+
+
+
+
+
+
+
+# Add an external project for OpenCascade
+ExternalProject_Add(
+    OCCT
+    GIT_REPOSITORY https://github.com/Open-Cascade-SAS/OCCT.git
+    GIT_TAG V7_8_1
+    CMAKE_ARGS
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/occt-install
+        -DBUILD_LIBRARY_TYPE=Static
+        -DBUILD_MODULE_ApplicationFramework=ON
+        -DBUILD_MODULE_DETools=OFF #static build fails on ExpToCasExe
+        -DBUILD_MODULE_DataExchange=ON
+        -DBUILD_MODULE_Draw=OFF
+        -DBUILD_MODULE_FoundationClasses=ON
+        -DBUILD_MODULE_ModelingAlgorithms=ON
+        -DBUILD_MODULE_ModelingData=ON
+        -DBUILD_MODULE_Visualization=ON
+        -DBUILD_DOC_Overview=OFF
+        -DBUILD_SAMPLES_QT=OFF
+    BUILD_IN_SOURCE 1
+    UPDATE_DISCONNECTED 1
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . -- -j${NUM_BUILD_THREADS}
+)
+add_dependencies(OCCT activate_emsdk freetype)
+
+include_directories(${CMAKE_BINARY_DIR}/occt-install/include/opencascade)
+link_directories(${CMAKE_BINARY_DIR}/occt-install/lib)
+
+# Add OpenCascade libraries
+ExternalProject_Get_Property(OCCT binary_dir)
+link_directories(${binary_dir}/lib)
+
+
+
+add_dependencies(${PROJECT_NAME} activate_emsdk freetype OCCT)
 
 set(CMAKE_INSTALL_PREFIX "/opt/occt-webgl")
 set(OpenCASCADE_DIR "/opt/emsdk-occt/lib/cmake/opencascade")
