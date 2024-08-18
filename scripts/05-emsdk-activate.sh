@@ -4,7 +4,7 @@ BIN_DIR="$( cd -P "$( dirname "$0" )"&& pwd )"
 
 
 pushd ${EMSDK_DIR}
-./emsdk activate latest
+./emsdk activate ${EMSDK_VERSION}
 source ./emsdk_env.sh
 popd
 

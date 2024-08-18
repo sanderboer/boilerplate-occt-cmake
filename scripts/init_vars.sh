@@ -14,6 +14,7 @@ FREETYPE_SRC_DIR=${BUILD_DEPS_DIR}/freetype_src
 FREETYPE_BUILD_DIR=${BUILD_DEPS_DIR}/freetype_build
 TOTAL_CORES=$(nproc)
 COMPILE_CORES=$((TOTAL_CORES - 1))
+EMSDK_VERSION=3.1.64
 
 EMSDK_DIR=${DEPS_INSTALL_DIR}/emsdk
 EMSDK_TOOLCHAIN_FILE=${EMSDK_DIR}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
