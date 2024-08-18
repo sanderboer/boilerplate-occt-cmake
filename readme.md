@@ -14,6 +14,15 @@ The scripts are split by the different stages of the build process, these are us
 - **CMake** (version 3.10 or higher)
 - **Git** (to clone the OpenCascade repository)
 
+## Magic
+
+The file scripts/06-emsdk-bootstap-freetype.sh is a bit of a hack to use Emscripten's freetype port.
+After this step is complete, Cmake with emscripten's toolchain file will find emscriptens port of freetype automagically.
+This feels lik a hack, because it is and it is very probable that it will break with a new version of emscripten.
+In the very least emscriptens port system and the location of its toolchain file are prone to change. Therefor the emsdk version is set to mid 2024's latest, i.e. version 3.1.64 .
+
+
+
 ## Project Structure
 
 ```plaintext
@@ -22,7 +31,8 @@ OpenCascadeProject/
 ├── src/
 │   └── main.cpp            # Example source file using OpenCascade
 ├─── deps/                  # Project dependencies directory (generated during the setup process)
-└─── build/                 # Build directory (generated during the build process)
+├──── build/                 # Build directory (generated during the build process)
+└──── dist/                 # Output directory (generated during the build and install process)
 
 ## Alternative Setup
 Once emsdk has been bootstrapped with freetype support, OpenCascade can also be initialized using the ExternalProject_Add mechanism.
