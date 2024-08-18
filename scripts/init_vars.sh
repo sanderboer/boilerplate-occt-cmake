@@ -4,6 +4,7 @@ BIN_DIR="$( cd -P "$( dirname "$0" )"&& pwd )"
 SRC_DIR="$( cd -P "$( dirname "$0" )"&& cd ../src && pwd )"
 ROOT_DIR="$( cd -P "$( dirname "$0" )"&& cd .. && pwd )"
 DIST_DIR=${ROOT_DIR}/dist
+BUILD_DIR=${ROOT_DIR}/build
 DEPS_SRC_DIR=${ROOT_DIR}/deps_src
 BUILD_DEPS_DIR=${ROOT_DIR}/build_deps
 DEPS_INSTALL_DIR=${ROOT_DIR}/deps
