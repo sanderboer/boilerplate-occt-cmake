@@ -11,7 +11,7 @@ export OCCT_TAG=V7_8_1
 # export CMAKE_C_FLAGS="${CMAKE_C_FLAGS} ${EMCC_FLAGS}"
 # export CMAKE_EXE_LINKER_FLAGS="${CMAKE_EXE_LINKER_FLAGS} ${EMCC_FLAGS}"
 
-rm -rf ${OCCT_BUILD_DIR}
+# rm -rf ${OCCT_BUILD_DIR}
 mkdir -p ${OCCT_BUILD_DIR}
 
 echo "================================================================================="
@@ -21,6 +21,7 @@ echo "==========================================================================
 pushd ${OCCT_BUILD_DIR}
 cmake \
   -DCMAKE_TOOLCHAIN_FILE=${EMSDK_TOOLCHAIN_FILE} \
+  -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR} \
   -DBUILD_LIBRARY_TYPE=Static \
   -DBUILD_MODULE_ApplicationFramework=ON \
   -DBUILD_MODULE_DETools=OFF \

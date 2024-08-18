@@ -1,6 +1,7 @@
 deps
 build
 build_deps
+dist
 
 *~
 .~*
